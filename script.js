@@ -68,10 +68,10 @@ const LANG = {
     mainSection: 'Remote', mainDesc: 'Pilot your Freebox Player from the browser',
     sectionA: 'Where do I find my remote code?', sectionB: 'Keyboard shortcuts',
     rcCode: 'Remote code', rcSave: 'Save', rcSaved: '✅ Code saved', rcMissingCode: '⚠️ Enter your remote code first',
-    setup_1: 'Open Freebox OS in another tab (mafreebox.freebox.fr).',
-    setup_2: 'Go to Paramètres de la Freebox → Personnaliser la télécommande.',
-    setup_3: 'Set or read the 8-character code, then paste it above and press Save.',
-    setup_4: 'Make sure your phone or computer is on the same Wi-Fi as the Freebox Player.',
+    setup_1: 'Turn on your Freebox Player (TV) and press the Free (home) button on the physical remote.',
+    setup_2: 'Go to Réglages → Système → Informations Freebox Player et Server.',
+    setup_3: 'Read the "Code télécommande réseau" (8 digits), paste it above and click Save.',
+    setup_4: 'Your phone or computer must be on the same Wi-Fi as the Freebox Player.',
     kb_arrows: 'Navigate', kb_enter: 'OK', kb_back: 'Back', kb_play: 'Play / Pause',
     kb_vol: 'Volume up / down', kb_mute: 'Mute', kb_home: 'Home', kb_info: 'Info', kb_num: 'Digits',
     kb_long: 'Tip: long-press any button to send a "long press" key.',
@@ -81,7 +81,7 @@ const LANG = {
     helpSettings: '❓ Help & Settings', settingsTab: '⚙️',
     help: '❓ Help', faq: 'FAQ', howto: 'How-To', wiki: 'Wiki',
     faq_q1: 'What is this app?', faq_a1: 'A web remote for the Freebox Player. It uses the official HTTP remote API to send keys to your box on the local network.',
-    faq_q2: 'Where do I find my remote code?', faq_a2: 'In Freebox OS → Paramètres de la Freebox → Personnaliser la télécommande. It is an 8-character code that you set yourself.',
+    faq_q2: 'Where do I find my remote code?', faq_a2: 'On the Freebox Player TV menu: press Free (home) → Réglages → Système → Informations Freebox Player et Server → "Code télécommande réseau". It is an auto-generated 8-digit code.',
     faq_q3: 'Why doesn\'t it work?', faq_a3: 'You must be connected to the same Wi-Fi as your Freebox Player. Requests go to hd1.freebox.fr which only resolves on your LAN.',
     faq_q4: 'Is my data private?', faq_a4: 'Yes. The code is stored only in your browser (localStorage), and key presses go directly to your Freebox over the LAN.',
     howto_1: 'Get your 8-character remote code from Freebox OS and paste it in the field at the top.',
@@ -113,10 +113,10 @@ const LANG = {
     mainSection: 'Télécommande', mainDesc: 'Pilote ta Freebox Player depuis le navigateur',
     sectionA: 'Où trouver mon code de télécommande ?', sectionB: 'Raccourcis clavier',
     rcCode: 'Code', rcSave: 'Enregistrer', rcSaved: '✅ Code enregistré', rcMissingCode: '⚠️ Saisis d\'abord ton code',
-    setup_1: 'Ouvre Freebox OS dans un autre onglet (mafreebox.freebox.fr).',
-    setup_2: 'Va dans Paramètres de la Freebox → Personnaliser la télécommande.',
-    setup_3: 'Définis ou note le code à 8 caractères, puis colle-le ci-dessus et clique sur Enregistrer.',
-    setup_4: 'Assure-toi que ton téléphone ou ton ordi est sur le même Wi-Fi que la Freebox Player.',
+    setup_1: 'Allume ta Freebox Player (TV) et appuie sur la touche Free (maison) de la télécommande physique.',
+    setup_2: 'Va dans Réglages → Système → Informations Freebox Player et Server.',
+    setup_3: 'Lis le « Code télécommande réseau » (8 chiffres), colle-le ci-dessus et clique sur Enregistrer.',
+    setup_4: 'Ton téléphone ou ton ordi doit être sur le même Wi-Fi que la Freebox Player.',
     kb_arrows: 'Naviguer', kb_enter: 'OK', kb_back: 'Retour', kb_play: 'Lecture / Pause',
     kb_vol: 'Volume + / −', kb_mute: 'Muet', kb_home: 'Accueil', kb_info: 'Info', kb_num: 'Chiffres',
     kb_long: 'Astuce : appui long sur un bouton pour envoyer un appui long.',
@@ -126,7 +126,7 @@ const LANG = {
     helpSettings: '❓ Aide & Paramètres', settingsTab: '⚙️',
     help: '❓ Aide', faq: 'FAQ', howto: 'Guide', wiki: 'Wiki',
     faq_q1: 'C\'est quoi cette appli ?', faq_a1: 'Une télécommande web pour la Freebox Player. Elle utilise l\'API HTTP officielle pour envoyer les touches à ta box sur le réseau local.',
-    faq_q2: 'Où trouver mon code de télécommande ?', faq_a2: 'Dans Freebox OS → Paramètres de la Freebox → Personnaliser la télécommande. C\'est un code à 8 caractères que tu définis toi-même.',
+    faq_q2: 'Où trouver mon code de télécommande ?', faq_a2: 'Sur la TV, via la Freebox Player : touche Free (maison) → Réglages → Système → Informations Freebox Player et Server → « Code télécommande réseau ». C\'est un code à 8 chiffres généré automatiquement.',
     faq_q3: 'Pourquoi ça ne marche pas ?', faq_a3: 'Tu dois être sur le même Wi-Fi que ta Freebox Player. Les requêtes vont vers hd1.freebox.fr qui ne se résout que sur ton réseau local.',
     faq_q4: 'Mes données sont privées ?', faq_a4: 'Oui. Le code reste dans ton navigateur (localStorage) et les touches partent en direct vers ta Freebox sur le LAN.',
     howto_1: 'Récupère ton code à 8 caractères depuis Freebox OS et colle-le dans le champ en haut.',
@@ -158,10 +158,10 @@ const LANG = {
     mainSection: 'جهاز التحكم', mainDesc: 'تحكّم في Freebox Player من المتصفح',
     sectionA: 'أين أجد رمز جهاز التحكم؟', sectionB: 'اختصارات لوحة المفاتيح',
     rcCode: 'الرمز', rcSave: 'حفظ', rcSaved: '✅ تم حفظ الرمز', rcMissingCode: '⚠️ أدخل الرمز أولًا',
-    setup_1: 'افتح Freebox OS في علامة تبويب أخرى (mafreebox.freebox.fr).',
-    setup_2: 'انتقل إلى Paramètres de la Freebox ← Personnaliser la télécommande.',
-    setup_3: 'اضبط أو اقرأ الرمز المكوّن من 8 أحرف، ثم الصقه في الأعلى واضغط حفظ.',
-    setup_4: 'تأكد أن هاتفك أو حاسوبك متصل بنفس شبكة الواي-فاي مع Freebox Player.',
+    setup_1: 'شغّل Freebox Player (التلفزيون) واضغط على زر Free (المنزل) في جهاز التحكم المادي.',
+    setup_2: 'اذهب إلى Réglages ← Système ← Informations Freebox Player et Server.',
+    setup_3: 'اقرأ « Code télécommande réseau » (8 أرقام)، الصقه في الأعلى ثم اضغط حفظ.',
+    setup_4: 'يجب أن يكون هاتفك أو حاسوبك على نفس شبكة الواي-فاي مع Freebox Player.',
     kb_arrows: 'تنقّل', kb_enter: 'موافق', kb_back: 'رجوع', kb_play: 'تشغيل / إيقاف مؤقت',
     kb_vol: 'الصوت + / −', kb_mute: 'كتم', kb_home: 'الرئيسية', kb_info: 'معلومات', kb_num: 'الأرقام',
     kb_long: 'نصيحة: اضغط مطوّلًا على أي زر لإرسال "ضغطة طويلة".',
@@ -171,7 +171,7 @@ const LANG = {
     helpSettings: '❓ مساعدة وإعدادات', settingsTab: '⚙️',
     help: '❓ مساعدة', faq: 'أسئلة شائعة', howto: 'كيف تستخدم', wiki: 'ويكي',
     faq_q1: 'ما هذا التطبيق؟', faq_a1: 'جهاز تحكم عن بُعد عبر الويب لـ Freebox Player. يستخدم واجهة HTTP الرسمية لإرسال المفاتيح إلى صندوقك على الشبكة المحلية.',
-    faq_q2: 'أين أجد رمز التحكم؟', faq_a2: 'في Freebox OS ← Paramètres de la Freebox ← Personnaliser la télécommande. هو رمز من 8 أحرف تضبطه بنفسك.',
+    faq_q2: 'أين أجد رمز التحكم؟', faq_a2: 'على التلفزيون عبر Freebox Player: زر Free (المنزل) ← Réglages ← Système ← Informations Freebox Player et Server ← « Code télécommande réseau ». رمز من 8 أرقام يُولَّد تلقائيًا.',
     faq_q3: 'لماذا لا يعمل؟', faq_a3: 'يجب أن تكون متصلًا بنفس شبكة الواي-فاي مع Freebox Player. الطلبات تذهب إلى hd1.freebox.fr وهو يعمل فقط على شبكتك المحلية.',
     faq_q4: 'هل بياناتي خاصة؟', faq_a4: 'نعم. الرمز يبقى في متصفحك فقط، والمفاتيح تُرسل مباشرة إلى Freebox عبر الشبكة المحلية.',
     howto_1: 'احصل على الرمز المكوّن من 8 أحرف من Freebox OS والصقه في الحقل أعلاه.',
@@ -1527,14 +1527,15 @@ function fbxBindKeypad() {
     };
     const end = (e) => {
       if (e.cancelable) e.preventDefault();
-      btn.classList.remove('pressed');
       if (timer) { clearTimeout(timer); timer = null; }
       if (!longFired) fbxSendKey(btn.dataset.key, false);
+      // Keep .pressed for 80ms so iOS Safari (no vibration) still gets a clear flash
+      setTimeout(() => btn.classList.remove('pressed'), 80);
     };
     const cancel = () => {
-      btn.classList.remove('pressed');
       if (timer) { clearTimeout(timer); timer = null; }
       longFired = true;
+      setTimeout(() => btn.classList.remove('pressed'), 80);
     };
 
     btn.addEventListener('pointerdown', start);

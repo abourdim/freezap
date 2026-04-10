@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr" data-theme="mosque-gold">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>FreeZap — Télécommande Freebox</title>
   <meta name="description" content="FreeZap — télécommande Freebox dans le navigateur, pilote ta Freebox Player depuis ton téléphone ou ton ordi." />
   <meta name="author" content="Workshop-DIY — abourdim" />
@@ -23,6 +23,42 @@
 
   <!-- ═══════════════════ Remote keypad styles ═══════════════════ -->
   <style>
+    /* Mobile base tweaks: no rubber-band scroll, no auto-resize of text */
+    html, body {
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+    }
+    /* Safe-area insets for notched / home-bar phones (iPhone X+) */
+    body {
+      padding-top: max(16px, env(safe-area-inset-top));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      padding-left: max(16px, env(safe-area-inset-left));
+    }
+    /* Kill 300ms tap delay and accidental double-tap zoom on every tappable */
+    .rc-btn, .rc-code-row button, .btn-icon-only, .btn-sm { touch-action: manipulation; }
+    .rc-code-row input { touch-action: manipulation; font-size: 16px; /* iOS avoid focus zoom */ }
+
+    /* Compact layout on phones: hide decorative clutter, shrink titles */
+    @media (max-width: 560px) {
+      .bismillah { display: none !important; }
+      #logoWrap, .logo-wrap { display: none !important; }
+      .header .subtitle { display: none !important; }
+      .header h1 { font-size: 1.25rem !important; line-height: 1.1; }
+      .app-footer { display: none !important; }
+      .header-right .status-pill { display: none !important; }
+      .card-title { font-size: .95rem !important; }
+      .card-subtitle { font-size: .72rem !important; }
+      .deco-band { display: none !important; }
+      .app { border-radius: 14px !important; box-shadow: 0 0 0 1px var(--border) !important; }
+      .rows-container { padding: 0 !important; }
+    }
+    @media (max-width: 380px) {
+      .header h1 { font-size: 1.1rem !important; }
+      .rc-pad { padding: 4px 8px 12px !important; gap: 10px !important; }
+      .rc-row { gap: 6px !important; }
+    }
+
     .rc-code-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding: 10px 14px 6px; }
     .rc-code-row label { font-size:.85rem; color:var(--text-muted); white-space:nowrap; }
     .rc-code-row input {
@@ -262,10 +298,10 @@
         <summary><span class="icon">🔑</span> <span data-i18n="sectionA">Where do I find my remote code?</span></summary>
         <div class="card">
           <ol style="padding:14px 32px; line-height:1.7;">
-            <li data-i18n="setup_1">Open Freebox OS in another tab (mafreebox.freebox.fr).</li>
-            <li data-i18n="setup_2">Go to <em>Paramètres de la Freebox → Personnaliser la télécommande</em>.</li>
-            <li data-i18n="setup_3">Set or read the 8-character code, then paste it above and press <em>Save</em>.</li>
-            <li data-i18n="setup_4">Make sure your phone or computer is on the same Wi-Fi as the Freebox Player.</li>
+            <li data-i18n="setup_1">Turn on your Freebox Player (TV) and press the Free (home) button on the physical remote.</li>
+            <li data-i18n="setup_2">Go to <em>Réglages → Système → Informations Freebox Player et Server</em>.</li>
+            <li data-i18n="setup_3">Read the <em>Code télécommande réseau</em> (8 digits), paste it above and click Save.</li>
+            <li data-i18n="setup_4">Your phone or computer must be on the same Wi-Fi as the Freebox Player.</li>
           </ol>
         </div>
       </details>

@@ -15,65 +15,82 @@ PWA install.
 
 | Freebox model | Status |
 |---|---|
-| **Freebox Revolution (v6) Player** | ✅ Works — uses the legacy unauthenticated `hd1.freebox.fr/pub/remote_control` API. |
+| **Freebox Revolution (v6) Player** | ✅ Works — uses the legacy unauthenticated `hd1.freebox.fr/pub/remote_control` API. **Tested v1.0.1.** |
 | **Freebox Pop / Delta / Ultra (v7+)** | ❌ Not supported — these boxes use a different, authenticated API. FreeZap will not control them. |
 | Freebox without a TV Player | ❌ Nothing to control. |
-
-To check: if you can open `http://hd1.freebox.fr/pub/remote_control?code=XXXXXXXX&key=ok`
-in a browser on your LAN and your TV reacts, you're good.
 
 ---
 
 ## ⚠️ Mixed-content warning — read this before hosting
 
-FreeZap **must be served over `http://` or opened directly from disk
-(`file://`)**. It calls `http://hd1.freebox.fr` over plain HTTP — if the page
-itself is loaded over `https://`, modern browsers will silently block those
-calls as mixed content and nothing will happen.
+FreeZap calls `http://hd1.freebox.fr` over plain HTTP. If you load FreeZap
+itself over `https://`, browsers enforce their mixed-content policy:
 
-This means you **cannot** host FreeZap on:
-- GitHub Pages
-- Netlify
-- Cloudflare Pages
-- any HTTPS-only host
+| Host | Desktop Chrome / Firefox | Safari iOS | Chrome Android |
+|---|---|---|---|
+| `file://` (local file) | ✅ works | — | — |
+| `http://192.168.x.x:PORT` (LAN HTTP server) | ✅ works | ✅ works | ✅ works |
+| `https://*.github.io/...` (GitHub Pages) | ⚠️ blocked by default, but **can be whitelisted per-site** in desktop Chrome only | ❌ **impossible to unblock** | ❌ **option removed from UI** |
+| Any other HTTPS host (Netlify, Vercel…) | ⚠️ same as above | ❌ same | ❌ same |
 
-You **can** run it from:
-- a local file (`file:///…/index.html`)
-- a tiny local HTTP server on the same LAN as the Freebox
-- a self-hosted box / Raspberry Pi serving over plain HTTP on your LAN
+**Bottom line:** if you want FreeZap to work on your phone, **do not rely
+on GitHub Pages**. Serve it over plain HTTP from your LAN (see below).
 
 ---
 
 ## 🚀 Quick start
 
-### Option 1 — open directly from disk
+### Option 1 — local file on your laptop (simplest)
 ```bash
-open index.html              # macOS
-xdg-open index.html          # Linux
-start index.html             # Windows
+git clone https://github.com/abourdim/freezap.git
+cd freezap
+open index.html           # macOS
+xdg-open index.html       # Linux
+start index.html          # Windows
 ```
+Works immediately. No phone support — laptop only.
 
-### Option 2 — serve over local HTTP (best for "Add to Home Screen")
+### Option 2 — serve from your Mac on your LAN (works on phones)
 ```bash
 cd freezap
-python3 -m http.server 8000
-# then open http://<your-mac-lan-ip>:8000/ on your phone
+./serve.sh                # defaults to port 8000
+# or: ./serve.sh 9000 to pick another port
 ```
+The script prints the exact URL to open on your phone, e.g.
+`http://192.168.1.15:8000/`. On your phone (same Wi-Fi), open that URL in
+Safari or Chrome and use **Add to Home Screen** to install FreeZap as a PWA.
 
-### Option 3 — install as a PWA on your phone
-1. Serve over local HTTP (Option 2).
-2. Open the page in Safari (iOS) or Chrome (Android) on the same Wi-Fi.
-3. Use *Add to Home Screen*. The icon installs and FreeZap opens fullscreen.
+Keep the Mac terminal running as long as you want the remote to be reachable.
+For a permanent setup, run `serve.sh` on a Raspberry Pi, a NAS, or any
+always-on machine on your LAN.
+
+### Option 3 — GitHub Pages (desktop Chrome only, requires manual unblock)
+1. Open `https://abourdim.github.io/freezap/` in desktop Chrome.
+2. Go to `chrome://settings/content/insecureContent`.
+3. Under *Allowed to show insecure content* click **Add** and enter
+   `https://abourdim.github.io`.
+4. Reload the FreeZap tab. It will now work, with a permanent
+   *Not Secure* warning in the omnibox (expected).
+
+⚠️ This trick **does not work on phones** (Safari iOS forbids mixed content
+outright, Chrome Android hides the toggle). Use Option 2 for phones.
 
 ---
 
-## 🔑 First-time setup
+## 🔑 First-time setup — find your remote code
 
-1. Open Freebox OS (`http://mafreebox.freebox.fr`) on the same network.
-2. Go to **Paramètres de la Freebox → Personnaliser la télécommande**.
-3. Set or read your 8-character remote code.
-4. Open FreeZap, paste the code in the field at the top, click **Enregistrer**.
-   The code is stored in your browser's `localStorage` and never leaves the device.
+The remote code lives on the **Freebox Player** (the TV box), not on
+`mafreebox.freebox.fr` (the router). You need to read it from the TV using
+your physical Freebox remote.
+
+1. Turn on the TV on the Freebox channel.
+2. Press the **Free** button (🏠 home) on the physical remote.
+3. Go to **Réglages** (⚙️) → **Système** → **Informations Freebox Player et Server**.
+4. Find the line **« Code télécommande réseau »** — it's an 8-digit code
+   auto-generated by the Player.
+5. Open FreeZap, paste the 8 digits into the **Code** field, press **Enregistrer**.
+6. The code is stored in your browser's `localStorage` and never leaves
+   the device.
 
 ---
 
@@ -91,7 +108,8 @@ python3 -m http.server 8000
 | `i` | Info |
 | `0` – `9` | Digits |
 
-**Long press** any on-screen button (≥ 500 ms) to send the key with the `long=true` flag — matches the behaviour of holding the physical remote.
+**Long press** any on-screen button (≥ 500 ms) to send the key with the
+`long=true` flag — matches the behaviour of holding the physical remote.
 
 ---
 
@@ -101,10 +119,10 @@ python3 -m http.server 8000
 - 🌍 Trilingual UI: 🇫🇷 FR (default) · 🇬🇧 EN · 🇩🇿 AR (with RTL layout)
 - 🎨 8 visual themes (Mosque, Zellige, Andalous, Riad, Médina, Space, Jungle, Robot)
 - ⌨️ Keyboard shortcuts (see above)
-- 📳 Haptic feedback on mobile
+- 📳 Haptic feedback on Android (`navigator.vibrate`) + visual press flash fallback for iOS
 - 📜 Activity log with TX/error tracing
 - 💾 Remote code persisted in `localStorage`
-- 📱 PWA installable, works offline once cached
+- 📱 PWA installable, works offline once cached, iPhone notch-safe (`env(safe-area-inset-*)`)
 - 🔒 Local-first: no analytics, no telemetry, no third-party calls
 
 ---
@@ -113,13 +131,15 @@ python3 -m http.server 8000
 
 | File | Purpose |
 |---|---|
-| `index.html` | UI: keypad, header, panels, all markup |
+| `index.html` | UI: keypad, header, panels, all markup, mobile CSS |
 | `script.js` | i18n, themes, panels, log, Freebox remote logic (`fbxSendKey`, long-press, keyboard) |
-| `style.css` | 8-theme system, responsive layout, animations |
+| `style.css` | 8-theme system, responsive layout, animations (inherited from workshop-diy template) |
 | `manifest.json` | PWA manifest |
 | `icon.svg` | Single vector icon (favicon + PWA install + maskable) |
+| `serve.sh` | One-line local HTTP server helper, prints your LAN URL for the phone |
 
-No build step, no dependencies, no node_modules. Just open `index.html`.
+No build step, no dependencies, no `node_modules`. Just open `index.html`
+or run `./serve.sh`.
 
 ---
 
@@ -128,9 +148,9 @@ No build step, no dependencies, no node_modules. Just open `index.html`.
 - The remote code lives **only** in your browser's `localStorage`.
 - Every key press is a single direct GET to `http://hd1.freebox.fr` on your
   LAN — nothing transits any third-party server.
-- No analytics, no telemetry, no fonts loaded over the network at runtime
-  except the Google Fonts CSS in `<head>` (you can remove that line if you
-  want zero external requests).
+- No analytics, no telemetry. The only external request at load time is
+  the Google Fonts CSS import in `<head>` — you can remove that line if
+  you want zero external requests.
 
 ---
 
@@ -141,8 +161,8 @@ by abourdim — themes, i18n, panels, log system, splash, and PWA shell are
 inherited from that template. The Freebox remote keypad and key dispatch
 logic are added on top.
 
-The Freebox HTTP remote control API is documented in many community projects;
-the endpoint `http://hd1.freebox.fr/pub/remote_control?code=XXXXXXXX&key=KEY`
+The Freebox HTTP remote control API is documented in many community
+projects; the endpoint `http://hd1.freebox.fr/pub/remote_control?code=XXXXXXXX&key=KEY`
 has been stable since the Freebox Revolution Player.
 
 ---
