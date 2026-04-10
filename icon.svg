@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- background -->
+  <rect width="512" height="512" rx="96" fill="#08091a"/>
+  <!-- subtle inner glow -->
+  <rect x="8" y="8" width="496" height="496" rx="92" fill="none" stroke="#d4a03c" stroke-opacity=".18" stroke-width="2"/>
+
+  <!-- remote body -->
+  <rect x="168" y="48" width="176" height="416" rx="64" fill="#d4a03c"/>
+  <rect x="180" y="60" width="152" height="392" rx="56" fill="#f0c96e"/>
+
+  <!-- screen / brand strip -->
+  <rect x="200" y="80" width="112" height="36" rx="10" fill="#08091a"/>
+
+  <!-- power button -->
+  <circle cx="256" cy="156" r="22" fill="#ef4444"/>
+  <path d="M256 144 v14 M247 152 a12 12 0 1 0 18 0" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+  <!-- d-pad -->
+  <circle cx="256" cy="232" r="42" fill="#08091a"/>
+  <circle cx="256" cy="232" r="14" fill="#d4a03c"/>
+  <path d="M256 200 l-8 12 h16 z" fill="#d4a03c"/>
+  <path d="M256 264 l-8 -12 h16 z" fill="#d4a03c"/>
+  <path d="M224 232 l12 -8 v16 z" fill="#d4a03c"/>
+  <path d="M288 232 l-12 -8 v16 z" fill="#d4a03c"/>
+
+  <!-- numpad grid -->
+  <g fill="#08091a">
+    <circle cx="216" cy="320" r="9"/><circle cx="256" cy="320" r="9"/><circle cx="296" cy="320" r="9"/>
+    <circle cx="216" cy="356" r="9"/><circle cx="256" cy="356" r="9"/><circle cx="296" cy="356" r="9"/>
+    <circle cx="216" cy="392" r="9"/><circle cx="256" cy="392" r="9"/><circle cx="296" cy="392" r="9"/>
+  </g>
+
+  <!-- color buttons -->
+  <circle cx="216" cy="428" r="8" fill="#dc2626"/>
+  <circle cx="244" cy="428" r="8" fill="#16a34a"/>
+  <circle cx="272" cy="428" r="8" fill="#facc15"/>
+  <circle cx="300" cy="428" r="8" fill="#2563eb"/>
+</svg>

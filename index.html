@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="fr" dir="ltr" data-theme="mosque-gold">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FreeZap — Télécommande Freebox</title>
+  <meta name="description" content="FreeZap — télécommande Freebox dans le navigateur, pilote ta Freebox Player depuis ton téléphone ou ton ordi." />
+  <meta name="author" content="Workshop-DIY — abourdim" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="FreeZap — Télécommande Freebox" />
+  <meta property="og:description" content="FreeZap — télécommande Freebox dans le navigateur, pilote ta Freebox Player depuis ton téléphone ou ton ordi." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="icon-512.png" />
+
+  <!-- PWA -->
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#08091a" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Righteous&family=Tajawal:wght@400;500;700&family=Bangers&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ═══════════════════ Remote keypad styles ═══════════════════ -->
+  <style>
+    .rc-code-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding: 10px 14px 6px; }
+    .rc-code-row label { font-size:.85rem; color:var(--text-muted); white-space:nowrap; }
+    .rc-code-row input {
+      flex:1; min-width:140px; padding:10px 12px;
+      background:rgba(0,0,0,.25); color:var(--text);
+      border:1px solid var(--border); border-radius:10px;
+      font-family:'Orbitron', monospace; font-size:1rem; letter-spacing:.15em; text-align:center;
+    }
+    .rc-code-row button {
+      padding:10px 14px; background:var(--accent); color:var(--bg);
+      border:0; border-radius:10px; cursor:pointer; font-weight:700;
+      transition:transform .1s ease, filter .2s ease;
+    }
+    .rc-code-row button:hover { filter:brightness(1.1); }
+    .rc-code-row button:active { transform:scale(.96); }
+
+    .rc-pad { padding: 6px 14px 16px; display:flex; flex-direction:column; gap:14px; }
+    .rc-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .rc-row.between { justify-content:space-between; }
+
+    .rc-btn {
+      flex: 1 1 0;
+      min-width: 56px;
+      min-height: 56px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-family: var(--font-h);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      box-shadow: 0 2px 0 rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05);
+      transition: transform .08s ease, background .2s ease, box-shadow .15s ease, border-color .2s ease;
+      user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .rc-btn:hover { background: rgba(255,255,255,.07); border-color: var(--accent); }
+    .rc-btn:active, .rc-btn.pressed {
+      transform: translateY(1px) scale(.97);
+      box-shadow: 0 0 0 rgba(0,0,0,0), inset 0 2px 6px rgba(0,0,0,.4);
+      background: var(--glow);
+    }
+    .rc-btn .ic { font-size: 1.3rem; line-height: 1; }
+    .rc-btn .lbl { font-size: .65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    .rc-btn.power { color:#ef4444; border-color:rgba(239,68,68,.35); }
+    .rc-btn.power:hover { background:rgba(239,68,68,.1); border-color:#ef4444; }
+    .rc-btn.accent { color: var(--accent); border-color: var(--accent); }
+    .rc-btn.ok { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .rc-btn.ok:hover { filter:brightness(1.1); background:var(--accent); }
+
+    .rc-btn.col-red    { background: linear-gradient(180deg, #dc2626, #991b1b); color:#fff; border-color:#7f1d1d; }
+    .rc-btn.col-green  { background: linear-gradient(180deg, #16a34a, #14532d); color:#fff; border-color:#14532d; }
+    .rc-btn.col-blue   { background: linear-gradient(180deg, #2563eb, #1e3a8a); color:#fff; border-color:#1e3a8a; }
+    .rc-btn.col-yellow { background: linear-gradient(180deg, #facc15, #b45309); color:#1a0f00; border-color:#92400e; }
+    .rc-btn.col-red:hover, .rc-btn.col-green:hover, .rc-btn.col-blue:hover, .rc-btn.col-yellow:hover { filter:brightness(1.15); }
+
+    .rc-dpad-wrap { display:flex; gap:14px; align-items:center; justify-content:center; flex-wrap:wrap; }
+    .rc-dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 64px);
+      grid-template-rows: repeat(3, 64px);
+      gap: 8px;
+    }
+    .rc-dpad .rc-btn { min-width:0; min-height:0; border-radius: 16px; }
+    .rc-dpad .up    { grid-column:2; grid-row:1; }
+    .rc-dpad .left  { grid-column:1; grid-row:2; }
+    .rc-dpad .ok    { grid-column:2; grid-row:2; border-radius: 50%; font-size:1rem; }
+    .rc-dpad .right { grid-column:3; grid-row:2; }
+    .rc-dpad .down  { grid-column:2; grid-row:3; }
+
+    .rc-side {
+      display:grid; grid-template-columns: 1fr 1fr; gap:8px; min-width:160px;
+    }
+    .rc-side .rc-btn { min-width:0; }
+
+    .rc-numpad {
+      display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;
+      max-width: 280px; margin: 0 auto;
+    }
+    .rc-numpad .rc-btn { font-family: 'Orbitron', monospace; font-size:1.2rem; }
+    .rc-numpad .zero { grid-column: 1 / -1; }
+
+    @media (max-width: 480px) {
+      .rc-dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); }
+      .rc-btn { min-width:48px; min-height:48px; padding:8px; }
+      .rc-btn .ic { font-size:1.15rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ═══════════════════ SPLASH SCREEN ═══════════════════ -->
+  <div class="splash" id="splash" onclick="dismissSplash()">
+    <div class="splash-inner">
+      <div class="splash-logo" id="splashLogo"></div>
+      <div class="splash-title">Workshop DIY</div>
+      <div class="splash-sub" data-i18n="subtitle">🚀 explore · 🎨 create · 💡 innovate</div>
+      <div class="splash-hint" data-i18n="splashHint">tap to skip</div>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="deco-band top-band" aria-hidden="true"></div>
+
+    <div class="rows-container">
+
+      <!-- ═══════════════════ HEADER ═══════════════════ -->
+      <div class="header">
+        <div class="bismillah" aria-hidden="true">
+          <span class="bism-ornament">&#x2726;</span>
+          بِسْمِ ٱللَّٰهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
+          <span class="bism-ornament">&#x2726;</span>
+        </div>
+
+        <div class="title-block">
+          <div class="logo-wrap" id="logoWrap"></div>
+          <div>
+            <h1 data-i18n="title">my-project</h1>
+            <div class="subtitle" data-i18n="subtitle">🚀 explore · 🎨 create · 💡 innovate</div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-buttons">
+            <button id="helpBtn" class="btn-icon-only" aria-label="Help">❓</button>
+            <button id="settingsBtn" class="btn-icon-only" aria-label="Settings">⚙️</button>
+            <button id="logBtn" class="btn-icon-only" aria-label="Activity Log">📜</button>
+          </div>
+          <div class="status-pill" id="statusPill">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText" data-i18n="disconnected">Disconnected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════ MAIN CARD — Remote ═══════════════════ -->
+      <div class="card" id="mainCard">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><span class="icon">📺</span> <span data-i18n="mainSection">Remote</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Pilot your Freebox Player from the browser</span> <span class="version-tag">v1.2</span></div>
+          </div>
+        </div>
+
+        <!-- Remote code input -->
+        <div class="rc-code-row">
+          <label for="rcCode" data-i18n="rcCode">Remote code</label>
+          <input id="rcCode" type="text" maxlength="8" placeholder="XXXXXXXX" autocomplete="off" spellcheck="false" />
+          <button id="rcSaveBtn" type="button" data-i18n="rcSave">Save</button>
+        </div>
+
+        <!-- Keypad -->
+        <div class="rc-pad">
+
+          <!-- Row 1: power + utility -->
+          <div class="rc-row">
+            <button class="rc-btn power" data-key="power" aria-label="power"><span class="ic">⏻</span><span class="lbl">power</span></button>
+            <button class="rc-btn" data-key="mute" aria-label="mute"><span class="ic">🔇</span><span class="lbl">mute</span></button>
+            <button class="rc-btn" data-key="home" aria-label="home"><span class="ic">🏠</span><span class="lbl">home</span></button>
+            <button class="rc-btn" data-key="back" aria-label="back"><span class="ic">↩</span><span class="lbl">back</span></button>
+          </div>
+
+          <!-- Row 2: sources -->
+          <div class="rc-row">
+            <button class="rc-btn" data-key="tv" aria-label="tv"><span class="ic">📺</span><span class="lbl">tv</span></button>
+            <button class="rc-btn" data-key="list" aria-label="list"><span class="ic">📋</span><span class="lbl">list</span></button>
+            <button class="rc-btn" data-key="epg" aria-label="epg"><span class="ic">🗓</span><span class="lbl">epg</span></button>
+            <button class="rc-btn" data-key="media" aria-label="media"><span class="ic">🎞</span><span class="lbl">media</span></button>
+          </div>
+
+          <!-- Row 3: info / options -->
+          <div class="rc-row">
+            <button class="rc-btn" data-key="info" aria-label="info"><span class="ic">ℹ</span><span class="lbl">info</span></button>
+            <button class="rc-btn" data-key="options" aria-label="options"><span class="ic">⚙</span><span class="lbl">opt</span></button>
+            <button class="rc-btn" data-key="mail" aria-label="mail"><span class="ic">✉</span><span class="lbl">mail</span></button>
+            <button class="rc-btn" data-key="help" aria-label="help"><span class="ic">？</span><span class="lbl">help</span></button>
+          </div>
+
+          <!-- D-pad + side controls -->
+          <div class="rc-dpad-wrap">
+            <div class="rc-dpad" aria-label="d-pad">
+              <button class="rc-btn up"    data-key="up"    aria-label="up"><span class="ic">▲</span></button>
+              <button class="rc-btn left"  data-key="left"  aria-label="left"><span class="ic">◀</span></button>
+              <button class="rc-btn ok"    data-key="ok"    aria-label="ok"><span class="ic">OK</span></button>
+              <button class="rc-btn right" data-key="right" aria-label="right"><span class="ic">▶</span></button>
+              <button class="rc-btn down"  data-key="down"  aria-label="down"><span class="ic">▼</span></button>
+            </div>
+            <div class="rc-side">
+              <button class="rc-btn accent" data-key="vol_inc"  aria-label="volume up"><span class="ic">🔊</span><span class="lbl">vol +</span></button>
+              <button class="rc-btn accent" data-key="prgm_inc" aria-label="program up"><span class="ic">⏶</span><span class="lbl">ch +</span></button>
+              <button class="rc-btn accent" data-key="vol_dec"  aria-label="volume down"><span class="ic">🔉</span><span class="lbl">vol −</span></button>
+              <button class="rc-btn accent" data-key="prgm_dec" aria-label="program down"><span class="ic">⏷</span><span class="lbl">ch −</span></button>
+            </div>
+          </div>
+
+          <!-- Numeric pad -->
+          <div class="rc-numpad">
+            <button class="rc-btn" data-key="1"><span class="ic">1</span></button>
+            <button class="rc-btn" data-key="2"><span class="ic">2</span></button>
+            <button class="rc-btn" data-key="3"><span class="ic">3</span></button>
+            <button class="rc-btn" data-key="4"><span class="ic">4</span></button>
+            <button class="rc-btn" data-key="5"><span class="ic">5</span></button>
+            <button class="rc-btn" data-key="6"><span class="ic">6</span></button>
+            <button class="rc-btn" data-key="7"><span class="ic">7</span></button>
+            <button class="rc-btn" data-key="8"><span class="ic">8</span></button>
+            <button class="rc-btn" data-key="9"><span class="ic">9</span></button>
+            <button class="rc-btn zero" data-key="0"><span class="ic">0</span></button>
+          </div>
+
+          <!-- Color buttons -->
+          <div class="rc-row">
+            <button class="rc-btn col-red"    data-key="red"    aria-label="red">●</button>
+            <button class="rc-btn col-green"  data-key="green"  aria-label="green">●</button>
+            <button class="rc-btn col-yellow" data-key="yellow" aria-label="yellow">●</button>
+            <button class="rc-btn col-blue"   data-key="blue"   aria-label="blue">●</button>
+          </div>
+
+          <!-- Media transport -->
+          <div class="rc-row">
+            <button class="rc-btn" data-key="prev" aria-label="prev"><span class="ic">⏮</span></button>
+            <button class="rc-btn" data-key="bwd"  aria-label="rewind"><span class="ic">⏪</span></button>
+            <button class="rc-btn" data-key="play" aria-label="play / pause"><span class="ic">⏯</span></button>
+            <button class="rc-btn" data-key="fwd"  aria-label="forward"><span class="ic">⏩</span></button>
+            <button class="rc-btn" data-key="next" aria-label="next"><span class="ic">⏭</span></button>
+            <button class="rc-btn" data-key="rec"  aria-label="record"><span class="ic" style="color:#ef4444">⏺</span></button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══════════════════ SECTION A — How to find your code ═══════════════════ -->
+      <details class="collapsible">
+        <summary><span class="icon">🔑</span> <span data-i18n="sectionA">Where do I find my remote code?</span></summary>
+        <div class="card">
+          <ol style="padding:14px 32px; line-height:1.7;">
+            <li data-i18n="setup_1">Open Freebox OS in another tab (mafreebox.freebox.fr).</li>
+            <li data-i18n="setup_2">Go to <em>Paramètres de la Freebox → Personnaliser la télécommande</em>.</li>
+            <li data-i18n="setup_3">Set or read the 8-character code, then paste it above and press <em>Save</em>.</li>
+            <li data-i18n="setup_4">Make sure your phone or computer is on the same Wi-Fi as the Freebox Player.</li>
+          </ol>
+        </div>
+      </details>
+
+      <!-- ═══════════════════ SECTION B — Keyboard shortcuts ═══════════════════ -->
+      <details class="collapsible">
+        <summary><span class="icon">⌨</span> <span data-i18n="sectionB">Keyboard shortcuts</span></summary>
+        <div class="card">
+          <div style="padding:14px 18px; display:grid; grid-template-columns:auto 1fr; gap:6px 18px; font-size:.9rem;">
+            <kbd>← → ↑ ↓</kbd><span data-i18n="kb_arrows">Navigate</span>
+            <kbd>Enter</kbd><span data-i18n="kb_enter">OK</span>
+            <kbd>Esc / ⌫</kbd><span data-i18n="kb_back">Back</span>
+            <kbd>Space</kbd><span data-i18n="kb_play">Play / Pause</span>
+            <kbd>+ / −</kbd><span data-i18n="kb_vol">Volume up / down</span>
+            <kbd>m</kbd><span data-i18n="kb_mute">Mute</span>
+            <kbd>h</kbd><span data-i18n="kb_home">Home</span>
+            <kbd>i</kbd><span data-i18n="kb_info">Info</span>
+            <kbd>0 – 9</kbd><span data-i18n="kb_num">Digits</span>
+          </div>
+          <p style="padding:0 18px 14px; color:var(--text-muted); font-size:.8rem;" data-i18n="kb_long">Tip: long-press any button to send a "long press" key.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- ═══════════════════ FOOTER ═══════════════════ -->
+    <footer class="app-footer">
+      <span class="footer-text">powered by <a href="https://workshop-diy.org" target="_blank" rel="noopener">workshop-diy.org</a></span>
+      <span class="hijri-date" id="hijriDate"></span>
+    </footer>
+
+    <div class="deco-band bottom-band" aria-hidden="true"></div>
+  </div>
+
+  <!-- Matrix rain canvas (hidden by default) -->
+  <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+
+  <!-- Debug panel (hidden, ?debug=1 to show) -->
+  <div id="debugPanel" class="debug-panel">
+    <span id="debugFps">0 FPS</span>
+    <span id="debugMem">0 MB</span>
+  </div>
+
+  <!-- ═══════════════════ LEFT PANEL — Help ═══════════════════ -->
+  <div class="sidebar-overlay" id="helpOverlay"></div>
+  <aside class="sidebar sidebar-left" id="helpPanel" aria-label="Help" role="dialog" aria-modal="true">
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="help">❓ Help</span>
+      <button id="helpCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="help-tabs">
+      <button class="help-tab active" data-tab="faq" data-i18n="faq">FAQ</button>
+      <button class="help-tab" data-tab="howto" data-i18n="howto">How-To</button>
+      <button class="help-tab" data-tab="wiki" data-i18n="wiki">Wiki</button>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- FAQ -->
+      <div class="help-content active" id="helpFaq">
+        <details class="help-item">
+          <summary data-i18n="faq_q1">What is this app?</summary>
+          <p data-i18n="faq_a1">A Workshop-DIY educational web app. Explore, create, and innovate!</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q2">How do I change the theme?</summary>
+          <p data-i18n="faq_a2">Open Settings (⚙️) and pick a theme from the dropdown.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q3">How do I change the language?</summary>
+          <p data-i18n="faq_a3">Open Settings (⚙️) and pick your language. Arabic enables RTL automatically.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q4">Is my data private?</summary>
+          <p data-i18n="faq_a4">Yes. Everything runs locally in your browser. No data is sent anywhere.</p>
+        </details>
+      </div>
+
+      <!-- How-To -->
+      <div class="help-content" id="helpHowto">
+        <div class="help-step">
+          <span class="help-step-num">1</span>
+          <p data-i18n="howto_1">Explore the main section to get started with the app.</p>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">2</span>
+          <p data-i18n="howto_2">Open collapsible sections to access more features.</p>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">3</span>
+          <p data-i18n="howto_3">Check the Activity Log (📜) for events and messages.</p>
+        </div>
+        <div class="help-step">
+          <span class="help-step-num">4</span>
+          <p data-i18n="howto_4">Use Settings (⚙️) to customize theme and language.</p>
+        </div>
+      </div>
+
+      <!-- Wiki -->
+      <div class="help-content" id="helpWiki">
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_themes_title">🎨 Themes</h3>
+          <p data-i18n="wiki_themes">8 built-in themes: 6 dark (Mosque, Zellige, Andalus, Space, Jungle, Robot) and 2 light Islamic themes (Riad, Medina).</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_i18n_title">🌐 Languages</h3>
+          <p data-i18n="wiki_i18n">Trilingual support: English, Français, العربية. Arabic automatically enables right-to-left layout.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_log_title">📜 Activity Log</h3>
+          <p data-i18n="wiki_log">Timestamped, color-coded log. Clear or copy to clipboard. Types: info, success, error, TX, RX.</p>
+        </div>
+        <div class="wiki-entry">
+          <h3 data-i18n="wiki_privacy_title">🔒 Privacy</h3>
+          <p data-i18n="wiki_privacy">Local-first, privacy-first. All data stays in your browser. No tracking, no analytics, no external calls.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>Workshop DIY</span>
+      <span class="badge"><strong>v1.2</strong></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Settings ═══════════════════ -->
+  <div class="sidebar-overlay" id="settingsOverlay"></div>
+  <aside class="sidebar" id="settingsPanel" aria-label="Settings" role="dialog" aria-modal="true">
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="settings">⚙️ Settings</span>
+      <button id="settingsCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+    </div>
+
+    <div class="sidebar-body">
+      <div class="sidebar-group">
+        <label class="sidebar-label" data-i18n="language">Language</label>
+        <select id="langSelect" class="sidebar-select" aria-label="Language">
+          <option value="en">🇬🇧 EN</option>
+          <option value="fr" selected>🇫🇷 FR</option>
+          <option value="ar">🇩🇿 عربي</option>
+        </select>
+      </div>
+      <div class="sidebar-group">
+        <label class="sidebar-label" data-i18n="theme">Theme</label>
+        <select id="themeSelect" class="sidebar-select" aria-label="Theme">
+          <option value="mosque-gold" data-i18n-opt="t_mosque">Mosque</option>
+          <option value="zellige" data-i18n-opt="t_zellige">Zellige</option>
+          <option value="andalus" data-i18n-opt="t_andalus">Andalus</option>
+          <option value="riad" data-i18n-opt="t_riad">Riad</option>
+          <option value="medina" data-i18n-opt="t_medina">Medina</option>
+          <option value="space" data-i18n-opt="t_space">Space</option>
+          <option value="jungle" data-i18n-opt="t_jungle">Jungle</option>
+          <option value="robot" data-i18n-opt="t_robot">Robot</option>
+        </select>
+      </div>
+      <div class="sidebar-group">
+        <label class="toggle-ctrl">
+          <input type="checkbox" id="soundToggle" class="checkbox-ctrl" />
+          <span data-i18n="soundEffects">🔊 Sound effects</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span>Workshop DIY</span>
+      <span class="badge"><strong>v1.2</strong></span>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════ RIGHT PANEL — Activity Log (docked) ═══════════════════ -->
+  <aside class="sidebar" id="logPanel" aria-label="Activity Log">
+    <div class="resize-handle" id="logResizeHandle"></div>
+    <div class="sidebar-header">
+      <span class="sidebar-title" data-i18n="activityLog">📜 Activity Log</span>
+      <div class="log-controls">
+        <button id="clearLogBtn" class="btn-sm"><span class="btn-icon">🧹</span><span data-i18n="clear">Clear</span></button>
+        <button id="copyLogBtn" class="btn-sm"><span class="btn-icon">📋</span><span data-i18n="copy">Copy</span></button>
+        <button id="exportLogBtn" class="btn-sm"><span class="btn-icon">💾</span><span data-i18n="export">Export</span></button>
+        <button id="logCloseBtn" class="btn-icon-only" aria-label="Close">✕</button>
+      </div>
+    </div>
+
+    <div class="log-filters" id="logFilters">
+      <button class="log-filter active" data-filter="all" data-i18n="filterAll">All</button>
+      <button class="log-filter" data-filter="info">Info</button>
+      <button class="log-filter" data-filter="success">✓</button>
+      <button class="log-filter" data-filter="error">✗</button>
+      <button class="log-filter" data-filter="tx">TX</button>
+      <button class="log-filter" data-filter="rx">RX</button>
+    </div>
+
+    <div class="sidebar-body log-body">
+      <div class="log" id="logContainer" aria-live="polite"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <span data-i18n="eventsMsg">Events &amp; messages</span>
+      <span class="badge"><strong>v1.2</strong></span>
+    </div>
+  </aside>
+
+  <!-- Toast -->
+  <div id="toastIndicator" class="toast-indicator">
+    <div class="toast-inner">
+      <div class="spinner"></div>
+      <div id="toastMessage" class="toast-text">Working…</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
