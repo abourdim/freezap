@@ -65,6 +65,9 @@ const LANG = {
   en: {
     title: 'FreeZap', subtitle: '📺 control your Freebox from the browser',
     disconnected: 'No code', connected: 'Ready',
+    statusNoCode: 'No code', statusChecking: 'Checking…',
+    statusReachable: 'Freebox reachable', statusUnreachable: 'Freebox unreachable',
+    statusLastTx: '{s}s ago',
     mainSection: 'Remote', mainDesc: 'Pilot your Freebox Player from the browser',
     sectionA: 'Where do I find my remote code?', sectionB: 'Keyboard shortcuts',
     rcCode: 'Remote code', rcSave: 'Save', rcSaved: '✅ Code saved', rcMissingCode: '⚠️ Enter your remote code first',
@@ -122,6 +125,9 @@ const LANG = {
   fr: {
     title: 'FreeZap', subtitle: '📺 pilote ta Freebox depuis le navigateur',
     disconnected: 'Pas de code', connected: 'Prête',
+    statusNoCode: 'Pas de code', statusChecking: 'Vérification…',
+    statusReachable: 'Freebox joignable', statusUnreachable: 'Freebox injoignable',
+    statusLastTx: 'il y a {s}s',
     mainSection: 'Télécommande', mainDesc: 'Pilote ta Freebox Player depuis le navigateur',
     sectionA: 'Où trouver mon code de télécommande ?', sectionB: 'Raccourcis clavier',
     rcCode: 'Code', rcSave: 'Enregistrer', rcSaved: '✅ Code enregistré', rcMissingCode: '⚠️ Saisis d\'abord ton code',
@@ -179,6 +185,9 @@ const LANG = {
   ar: {
     title: 'FreeZap', subtitle: '📺 تحكّم في Freebox من المتصفح',
     disconnected: 'لا يوجد رمز', connected: 'جاهز',
+    statusNoCode: 'لا يوجد رمز', statusChecking: 'جارٍ الفحص…',
+    statusReachable: 'Freebox متاح', statusUnreachable: 'Freebox غير متاح',
+    statusLastTx: 'قبل {s} ث',
     mainSection: 'جهاز التحكم', mainDesc: 'تحكّم في Freebox Player من المتصفح',
     sectionA: 'أين أجد رمز جهاز التحكم؟', sectionB: 'اختصارات لوحة المفاتيح',
     rcCode: 'الرمز', rcSave: 'حفظ', rcSaved: '✅ تم حفظ الرمز', rcMissingCode: '⚠️ أدخل الرمز أولًا',
@@ -256,6 +265,8 @@ function setLanguage(lang) {
   if (sel) sel.value = lang;
   try { localStorage.setItem('wdiy-lang', lang); } catch {}
   log(s.langChanged, 'info');
+  // Re-render the Freebox status pill in the new language
+  if (typeof fbxRefreshStatus === 'function') fbxRefreshStatus();
 }
 
 /* ═══════ THEMES ═══════ */
@@ -1508,6 +1519,16 @@ document.readyState === 'loading'
 
 const FBX_LS_KEY = 'fbx_rc_code';
 const FBX_RC_URL = 'http://hd1.freebox.fr/pub/remote_control';
+const FBX_PROBE_URL = 'http://hd1.freebox.fr/';   // innocuous root — no command sent
+const FBX_HEARTBEAT_MS = 20000;                    // re-probe every 20 s
+const FBX_LAST_TX_FRESH_MS = 8000;                 // "OK · Ns ago" label within this window
+
+// Runtime status state (not persisted)
+let fbxLastTxTime = 0;      // timestamp of last successful fetch
+let fbxLastTxOk = null;     // true | false | null
+let fbxReachable = null;    // true | false | null (probe result)
+let fbxHeartbeatId = null;  // interval id
+let fbxStatusRefreshId = null; // interval id (UI refresh for "Ns ago" counter)
 
 function fbxGetCode() {
   return (localStorage.getItem(FBX_LS_KEY) || '').trim();
@@ -1524,7 +1545,98 @@ function fbxSaveCode() {
   localStorage.setItem(FBX_LS_KEY, v);
   showToast(LANG[currentLang].rcSaved || '✅ Saved', 1500);
   log(`Remote code saved: ${v}`, 'success');
-  setStatus(true);
+  // Code just saved — start probing the Freebox right away
+  fbxRefreshStatus();
+  fbxProbeReachability().then(fbxRefreshStatus);
+  fbxStartHeartbeat();
+}
+
+/**
+ * Update the status pill text + color based on current runtime state.
+ * States (in order of precedence):
+ *   1. No code            → gray "No code"
+ *   2. Fresh last TX OK   → green "OK · Ns ago"
+ *   3. Fresh last TX err  → red   "Error · Ns ago"
+ *   4. Reachable (probe)  → green "Freebox reachable"
+ *   5. Unreachable        → red   "Freebox unreachable"
+ *   6. Checking (initial) → gray "Checking…"
+ */
+function fbxRefreshStatus() {
+  const pill = document.getElementById('statusPill');
+  const txt = document.getElementById('statusText');
+  const s = LANG[currentLang] || {};
+  if (!pill || !txt) return;
+
+  const hasCode = !!fbxGetCode();
+  if (!hasCode) {
+    txt.textContent = s.statusNoCode || 'No code';
+    pill.classList.remove('connected');
+    return;
+  }
+
+  const now = Date.now();
+  const fresh = fbxLastTxTime && (now - fbxLastTxTime) < FBX_LAST_TX_FRESH_MS;
+
+  if (fresh) {
+    const age = Math.max(1, Math.round((now - fbxLastTxTime) / 1000));
+    const ago = (s.statusLastTx || 'Last TX').replace('{s}', String(age));
+    if (fbxLastTxOk) {
+      txt.textContent = `✓ ${ago}`;
+      pill.classList.add('connected');
+    } else {
+      txt.textContent = `✗ ${ago}`;
+      pill.classList.remove('connected');
+    }
+    return;
+  }
+
+  if (fbxReachable === true) {
+    txt.textContent = s.statusReachable || 'Freebox reachable';
+    pill.classList.add('connected');
+  } else if (fbxReachable === false) {
+    txt.textContent = s.statusUnreachable || 'Freebox unreachable';
+    pill.classList.remove('connected');
+  } else {
+    txt.textContent = s.statusChecking || 'Checking…';
+    pill.classList.remove('connected');
+  }
+}
+
+/**
+ * Silent reachability probe. Does NOT send a remote key — hits the Freebox
+ * Server root URL in no-cors mode. We only care whether fetch() rejects
+ * (network-level failure → unreachable) or resolves (LAN reachable).
+ */
+async function fbxProbeReachability() {
+  try {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), 3000) : null;
+    await fetch(FBX_PROBE_URL, {
+      mode: 'no-cors',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+    if (timeoutId) clearTimeout(timeoutId);
+    fbxReachable = true;
+  } catch (_e) {
+    fbxReachable = false;
+  }
+  return fbxReachable;
+}
+
+function fbxStartHeartbeat() {
+  if (fbxHeartbeatId) return;
+  fbxHeartbeatId = setInterval(async () => {
+    if (!fbxGetCode()) return; // no code → no probing
+    await fbxProbeReachability();
+    fbxRefreshStatus();
+  }, FBX_HEARTBEAT_MS);
+}
+
+function fbxStartStatusRefresh() {
+  if (fbxStatusRefreshId) return;
+  // Tick every second so the "Ns ago" label stays current
+  fbxStatusRefreshId = setInterval(fbxRefreshStatus, 1000);
 }
 
 async function fbxSendKey(key, long = false) {
@@ -1532,7 +1644,7 @@ async function fbxSendKey(key, long = false) {
   if (!code) {
     showToast(LANG[currentLang].rcMissingCode || '⚠️ Enter your remote code first', 2200);
     log(`No remote code — ignored "${key}"`, 'error');
-    setStatus(false);
+    fbxRefreshStatus();
     return;
   }
   const url = `${FBX_RC_URL}?code=${encodeURIComponent(code)}&key=${encodeURIComponent(key)}${long ? '&long=true' : ''}`;
@@ -1541,9 +1653,16 @@ async function fbxSendKey(key, long = false) {
   try {
     // no-cors: the Freebox API doesn't send CORS headers, but the GET still reaches the box on the LAN
     await fetch(url, { mode: 'no-cors', cache: 'no-store' });
+    fbxLastTxOk = true;
+    fbxLastTxTime = Date.now();
+    fbxReachable = true; // successful tx implies reachability
   } catch (e) {
     log(`✗ ${key}: ${e.message}`, 'error');
+    fbxLastTxOk = false;
+    fbxLastTxTime = Date.now();
+    fbxReachable = false; // network-level failure
   }
+  fbxRefreshStatus();
 }
 
 function fbxBindKeypad() {
@@ -1614,14 +1733,9 @@ function initFreeboxRemote() {
   const saveBtn = document.getElementById('rcSaveBtn');
   if (!codeInput || !saveBtn) return;
 
-  // Load saved code
+  // Load saved code and pre-fill the input
   const saved = fbxGetCode();
-  if (saved) {
-    codeInput.value = saved;
-    setStatus(true);
-  } else {
-    setStatus(false);
-  }
+  if (saved) codeInput.value = saved;
 
   saveBtn.addEventListener('click', fbxSaveCode);
   codeInput.addEventListener('change', fbxSaveCode);
@@ -1631,6 +1745,14 @@ function initFreeboxRemote() {
 
   fbxBindKeypad();
   fbxBindKeyboard();
+
+  // Initial status render ("No code" or "Checking…") then kick the probe
+  fbxRefreshStatus();
+  fbxStartStatusRefresh();
+  if (saved) {
+    fbxProbeReachability().then(fbxRefreshStatus);
+    fbxStartHeartbeat();
+  }
 
   log('📺 Freebox remote ready', 'info');
 }

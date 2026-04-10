@@ -3,6 +3,34 @@
 All notable changes to **FreeZap** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v1.0.3 — 2026-04-10
+
+Freebox reachability status in the header pill.
+
+### Added
+- **Live status pill** (top-right of the header) now shows one of:
+  - 🟡 *No code* — no remote code saved yet, no probing.
+  - ⚪ *Checking…* — initial LAN probe in flight (< 3 s).
+  - 🟢 *Freebox reachable* — probe succeeded (`http://hd1.freebox.fr/` responded).
+  - 🔴 *Freebox unreachable* — probe rejected (DNS / timeout / network).
+  - 🟢 *✓ {n}s ago* — last key press succeeded (fresh within 8 s).
+  - 🔴 *✗ {n}s ago* — last key press threw a network error.
+- **Silent reachability probe** on page load + every 20 s heartbeat while a
+  code is set. Probes hit the Freebox Server root URL (not `/pub/remote_control`),
+  so no actual key is sent during probes.
+- **Per-TX tracking**: `fbxSendKey` flips the pill immediately after each
+  tap based on whether `fetch()` resolved or rejected.
+- 5 new i18n keys (`statusNoCode`, `statusChecking`, `statusReachable`,
+  `statusUnreachable`, `statusLastTx`) fully localized EN / FR / AR.
+
+### Known limits (documented honestly in the FAQ)
+- The pill reflects **LAN reachability of the Freebox Server**, not the
+  specific state of the Player (the `hd1.freebox.fr` URL is served by the
+  Server, not the Player directly).
+- The pill **cannot** tell you whether your remote code is correct — the
+  no-cors opaque response hides the HTTP status code. A 🟢 pill just means
+  "the network path to the box is up and the last fetch didn't throw".
+
 ## v1.0.2 — 2026-04-10
 
 FAQ expansion — all the useful answers now live in the in-app Help panel,
