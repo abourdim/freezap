@@ -3,6 +3,23 @@
 All notable changes to **FreeZap** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v1.0.2 — 2026-04-10
+
+FAQ expansion — all the useful answers now live in the in-app Help panel,
+fully translated across EN / FR / AR.
+
+### Added
+- **6 new FAQ entries** in the Help panel (tap ❓ in the header):
+  - *FreeZap loads but no buttons work (GitHub Pages / HTTPS). How do I unblock it?*
+    → step-by-step for `chrome://settings/content/insecureContent` + caveat
+    that it does not work on Safari iOS / Chrome Android.
+  - *How do I use FreeZap on my phone?* → `./serve.sh` local HTTP server.
+  - *Does FreeZap work with my Freebox Pop / Delta / Ultra?* → No, Revolution only.
+  - *Can I control FreeZap with the keyboard?* → full shortcut list.
+  - *Does FreeZap need an internet connection?* → No, LAN only.
+  - *What is "long press"?* → 500 ms hold sends `&long=true`.
+- All new FAQ strings localized in English, French, Arabic.
+
 ## v1.0.1 — 2026-04-10
 
 Tested live on a Freebox Revolution (v6) Player. Bug fixes and mobile polish.

@@ -378,6 +378,30 @@
           <summary data-i18n="faq_q4">Is my data private?</summary>
           <p data-i18n="faq_a4">Yes. Everything runs locally in your browser. No data is sent anywhere.</p>
         </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q5">FreeZap loads but no buttons work (GitHub Pages / HTTPS). How do I unblock it?</summary>
+          <p data-i18n="faq_a5">Browsers block HTTP calls from HTTPS pages (mixed content). In desktop Chrome: open <code>chrome://settings/content/insecureContent</code>, under "Allowed to show insecure content" click Add and enter the page domain (e.g. <code>https://abourdim.github.io</code>), then reload. This trick does NOT work on Safari iOS or Chrome Android — on phones, use a local HTTP server instead (see next question).</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q6">How do I use FreeZap on my phone?</summary>
+          <p data-i18n="faq_a6">Run <code>./serve.sh</code> from the project folder on a computer that stays on your Wi-Fi (Mac, Raspberry Pi, NAS). It prints a URL like <code>http://192.168.1.15:8000/</code> — open that on your phone in Safari or Chrome (same Wi-Fi) and tap "Add to Home Screen". Everything is plain HTTP so no mixed-content block.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q7">Does FreeZap work with my Freebox Pop / Delta / Ultra?</summary>
+          <p data-i18n="faq_a7">No. FreeZap uses the legacy unauthenticated HTTP remote API that only exists on the Freebox Revolution (v6) Player. Pop, Delta and Ultra use a different token-authenticated API that FreeZap does not implement.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q8">Can I control FreeZap with the keyboard?</summary>
+          <p data-i18n="faq_a8">Yes. Arrows navigate, Enter is OK, Esc/Backspace is Back, Space is Play/Pause, + and − are volume, m is Mute, h is Home, i is Info, and 0–9 send the matching digit.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q9">Does FreeZap need an internet connection?</summary>
+          <p data-i18n="faq_a9">No. Once the page is loaded, FreeZap only talks to your Freebox on the local network. Your phone/computer and the Freebox Player just need to be on the same Wi-Fi — that Wi-Fi doesn't even need internet access.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q10">What is "long press"?</summary>
+          <p data-i18n="faq_a10">Hold any on-screen button for more than 500 ms and the key is sent with <code>&amp;long=true</code>, matching the behaviour of holding the physical remote (useful for fast volume / channel scrolling).</p>
+        </details>
       </div>
 
       <!-- How-To -->
