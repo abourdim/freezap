@@ -3,6 +3,36 @@
 All notable changes to **FreeZap** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v1.1.2 — 2026-04-11
+
+In-app FAQ refresh covering the v1.1 status pill and the experimental agent,
+plus cleanup of four stale `v1.2` / `v1.1.0` version badges left over in the
+header and sidebar footers after the v1.0.x / v1.1.x releases.
+
+### Added
+- **3 new FAQ entries** in the in-app Help panel, fully localized EN / FR / AR:
+  - *"What's the colored pill at the top right?"* — documents all 6 states of
+    the v1.0.3+ status pill (No code, Checking, Reachable, Unreachable, ✓ Ns
+    ago, ✗ Ns ago) and the 20 s re-probe loop.
+  - *"Can I see the current channel / volume / power state in FreeZap?"* —
+    points at `freezap-agent/` for live enriched status.
+  - *"Why is the FreeZap Agent marked experimental?"* — summarizes the 4
+    failed Revolution pairing attempts and links to the known-limitation
+    section in `freezap-agent/README.md` for workarounds (reusing an existing
+    `app_token` from Home Assistant / Jeedom / freebox-api).
+- 18 new i18n keys (`faq_q11..q13` + `faq_a11..a13` × 3 languages).
+
+### Fixed
+- 4 stale version badges in `index.html`:
+  - main-card `.version-tag` showed `v1.2` (workshop-diy template leftover) → `v1.1.2`
+  - Help panel `.sidebar-footer` badge `v1.2` → `v1.1.2`
+  - Settings panel badge `v1.1.0` → `v1.1.2`
+  - Log panel badge `v1.2` → `v1.1.2`
+
+### Notes
+- No JavaScript logic changes, no CSS changes, no agent changes. Pure
+  documentation and version-label cleanup. 100% backward compatible.
+
 ## v1.1.1 — 2026-04-11
 
 Docs-only patch marking the v1.1.0 agent pairing flow as **experimental /

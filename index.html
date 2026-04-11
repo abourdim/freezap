@@ -203,7 +203,7 @@
         <div class="card-header">
           <div>
             <div class="card-title"><span class="icon">📺</span> <span data-i18n="mainSection">Remote</span></div>
-            <div class="card-subtitle"><span data-i18n="mainDesc">Pilot your Freebox Player from the browser</span> <span class="version-tag">v1.2</span></div>
+            <div class="card-subtitle"><span data-i18n="mainDesc">Pilot your Freebox Player from the browser</span> <span class="version-tag">v1.1.2</span></div>
           </div>
         </div>
 
@@ -402,6 +402,18 @@
           <summary data-i18n="faq_q10">What is "long press"?</summary>
           <p data-i18n="faq_a10">Hold any on-screen button for more than 500 ms and the key is sent with <code>&amp;long=true</code>, matching the behaviour of holding the physical remote (useful for fast volume / channel scrolling).</p>
         </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q11">What's the colored pill at the top right?</summary>
+          <p data-i18n="faq_a11">It's the live Freebox status. Possible states: 🟡 <em>No code</em> — you haven't saved your remote code yet. ⚪ <em>Checking…</em> — the initial LAN probe is running. 🟢 <em>Freebox reachable</em> — the box responds on the LAN. 🔴 <em>Freebox unreachable</em> — network / DNS / wrong Wi-Fi. 🟢 <em>✓ Ns ago</em> — last button press succeeded. 🔴 <em>✗ Ns ago</em> — last button press failed. Re-probes every 20 seconds automatically.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q12">Can I see the current channel / volume / power state in FreeZap?</summary>
+          <p data-i18n="faq_a12">Yes — <strong>experimentally</strong>, via the optional <code>freezap-agent</code>. It's a tiny Python 3 bridge (stdlib only, ~400 lines) that pairs with the authenticated Freebox OS API and exposes real-time player state to FreeZap over <code>http://localhost:8766/</code>. When it's running and paired, the pill upgrades to e.g. <code>📺 TF1 · 🔊 Vol 42</code> instead of just "Reachable". See <code>freezap-agent/README.md</code> in the repo for the setup.</p>
+        </details>
+        <details class="help-item">
+          <summary data-i18n="faq_q13">Why is the FreeZap Agent marked "experimental"?</summary>
+          <p data-i18n="faq_a13">Because its pairing flow hasn't been verified end-to-end on a live Freebox Revolution yet. The HTTP protocol works correctly (<code>POST /api/v6/login/authorize/</code> returns a valid track, and <code>GET …/{id}</code> reports <code>status: pending</code>), but in 4 real-world attempts against a Revolution (r1, firmware <code>api_version 15.0</code>) the physical validation step never completed — no prompt appeared on the front-panel OLED, and no pending request showed up under <em>Freebox OS → Gestion des accès → Applications</em>. Likely causes: aging OLED hardware, firmware quirk, or the auth UI having moved. FreeZap still works perfectly without the agent — it falls back to the passive reachability pill. See the "Known limitation" section in <code>freezap-agent/README.md</code> for workarounds (including reusing an existing <code>app_token</code> from Home Assistant, Jeedom, or freebox-api).</p>
+        </details>
       </div>
 
       <!-- How-To -->
@@ -447,7 +459,7 @@
 
     <div class="sidebar-footer">
       <span>Workshop DIY</span>
-      <span class="badge"><strong>v1.2</strong></span>
+      <span class="badge"><strong>v1.1.2</strong></span>
     </div>
   </aside>
 
@@ -496,7 +508,7 @@
 
     <div class="sidebar-footer">
       <span>FreeZap</span>
-      <span class="badge"><strong>v1.1.0</strong></span>
+      <span class="badge"><strong>v1.1.2</strong></span>
     </div>
   </aside>
 
@@ -528,7 +540,7 @@
 
     <div class="sidebar-footer">
       <span data-i18n="eventsMsg">Events &amp; messages</span>
-      <span class="badge"><strong>v1.2</strong></span>
+      <span class="badge"><strong>v1.1.2</strong></span>
     </div>
   </aside>
 
