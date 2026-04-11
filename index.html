@@ -487,11 +487,16 @@
           <span data-i18n="soundEffects">🔊 Sound effects</span>
         </label>
       </div>
+      <div class="sidebar-group">
+        <label class="sidebar-label" for="rcAgentUrl" data-i18n="agentUrlLabel">URL de l'agent FreeZap</label>
+        <input id="rcAgentUrl" type="url" class="sidebar-select" placeholder="http://localhost:8766" autocomplete="off" spellcheck="false" style="padding:8px 10px;font-family:'Orbitron',monospace;font-size:.85rem;" />
+        <p class="sidebar-hint" data-i18n="agentUrlHint" style="margin:6px 0 0;font-size:.72rem;color:var(--text-muted);line-height:1.4;">Optionnel — agent local pour le statut temps réel (allumée, chaîne, volume). Voir freezap-agent/README.md.</p>
+      </div>
     </div>
 
     <div class="sidebar-footer">
-      <span>Workshop DIY</span>
-      <span class="badge"><strong>v1.2</strong></span>
+      <span>FreeZap</span>
+      <span class="badge"><strong>v1.1.0</strong></span>
     </div>
   </aside>
 

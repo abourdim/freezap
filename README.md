@@ -15,9 +15,43 @@ PWA install.
 
 | Freebox model | Status |
 |---|---|
-| **Freebox Revolution (v6) Player** | ✅ Works — uses the legacy unauthenticated `hd1.freebox.fr/pub/remote_control` API. **Tested v1.0.1.** |
+| **Freebox Revolution (v6) Player** | ✅ Works — uses the legacy unauthenticated `hd1.freebox.fr/pub/remote_control` API. **Tested v1.0.1.** Live status available via the optional [FreeZap Agent](./freezap-agent/) (v1.1.0+). |
 | **Freebox Pop / Delta / Ultra (v7+)** | ❌ Not supported — these boxes use a different, authenticated API. FreeZap will not control them. |
 | Freebox without a TV Player | ❌ Nothing to control. |
+
+---
+
+## 📡 Live player status (optional, v1.1.0+)
+
+Out of the box FreeZap only knows *"the Freebox responds on the LAN"*. If you
+want the header pill to show **real-time player state** (powered / in standby,
+current channel, volume, mute), install and run the **[FreeZap Agent](./freezap-agent/)**
+— a ~400-line Python 3 stdlib script that lives in `freezap-agent/` and acts
+as a local authenticated bridge to the Freebox OS API.
+
+Enhanced pill states (when the agent is running):
+
+- 🟢 **`📺 TF1 · 🔊 Vol 42`** — Player running, on channel TF1, volume 42
+- 🟡 **`😴 En veille`** — Player in standby
+- 🔴 **`✗ Agent KO`** — agent running but can't reach the Freebox
+
+```bash
+cd freezap-agent
+./start.sh
+# → asks you to press ✓ on the Freebox front panel (one-time pairing)
+# → runs on http://localhost:8766/ with /health and /status endpoints
+```
+
+Then in FreeZap open **Settings (⚙️)** and paste `http://localhost:8766` into
+the **FreeZap Agent URL** field (or leave the default, it's already pointed
+there). FreeZap polls `/status` every 2 seconds and upgrades the pill.
+
+**The agent is optional.** If you don't run it, or if its URL is unreachable,
+FreeZap silently falls back to the v1.0.3 passive reachability pill
+(`Joignable` / `Injoignable` / `Last TX: Ns ago`). No breakage.
+
+See [freezap-agent/README.md](./freezap-agent/README.md) for pairing details,
+security notes, launchd/systemd service templates, and troubleshooting.
 
 ---
 

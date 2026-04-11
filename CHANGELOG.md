@@ -3,6 +3,78 @@
 All notable changes to **FreeZap** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v1.1.0 — 2026-04-11
+
+Real-time Freebox Player status via an optional local agent.
+
+### Added — `freezap-agent/` (new directory)
+
+- **`freezap-agent.py`** — ~400 lines of Python 3 stdlib only (no pip, no
+  venv). A local HTTP bridge between FreeZap (browser JS) and the
+  authenticated Freebox OS API (`mafreebox.freebox.fr/api/v6/...`). Handles:
+  - **First-time pairing** via `POST /api/v6/login/authorize/`. Prints a
+    banner and blocks until you press ✓ on the Freebox front-panel screen.
+    Saves the `app_token` to `~/.freezap/token.json` with mode 0600.
+  - **Per-session auth** via `GET /api/v6/login/` challenge → HMAC-SHA1
+    (`key=app_token`, `data=challenge`) → `POST /api/v6/login/session/` →
+    `X-Fbx-App-Auth` header. Session auto-renewed every 25 minutes.
+  - **Player discovery** via `GET /api/v6/player/` (picks first Player).
+  - **Background polling** every 2 seconds: `/api/v6/player/{id}/api/v7/status/`
+    (power state + foreground app / channel) and `/api/v7/control/volume`
+    (gracefully absent on some Revolution firmwares).
+  - **CORS-enabled HTTP server** on `localhost:8766` exposing `/health`,
+    `/status`, and a root index. OPTIONS preflight handled correctly.
+- **`freezap-agent/start.sh`** — one-line launcher that checks for `python3`
+  and runs the agent. Respects `FREEZAP_AGENT_PORT` env var.
+- **`freezap-agent/README.md`** — full pairing walkthrough, endpoint docs,
+  launchd (macOS) and systemd (Linux/Pi) service templates, security notes,
+  and troubleshooting for the `/control/volume` unavailability on Revolution.
+
+### Added — FreeZap (`script.js`, `index.html`)
+
+- **Agent polling in `script.js`** — new constants (`FBX_AGENT_LS_KEY`,
+  `FBX_AGENT_DEFAULT`, `FBX_AGENT_POLL_MS`, `FBX_AGENT_FRESH_MS`), new state
+  (`fbxAgentData`, `fbxAgentTime`, `fbxAgentOk`, `fbxAgentPollId`), and four
+  new functions: `fbxGetAgentUrl`, `fbxSetAgentUrl`, `fbxPollAgent`,
+  `fbxStartAgentPolling` / `fbxStopAgentPolling`. Polls `/status` every 2 s.
+- **Enriched `fbxRefreshStatus`** — new precedence cascade with agent data on
+  top, falling back cleanly to the v1.0.3 reachability pill when the agent is
+  absent, unreachable, or returns stale data (> 6 s old).
+- **Six new pill states** driven by agent data:
+  - 🟢 `📺 <channel>` — powered + current TV channel
+  - 🟢 `🟢 On` / `Allumée` / `مُشغَّلة` — powered, not on TV
+  - 🟡 `😴 Standby` / `En veille` / `في وضع السكون` — Player in standby
+  - 🔴 `✗ Agent error` — agent running but Freebox API failed
+  - 🟢 Any of the above + `🔊 Vol {n}` when volume endpoint is exposed
+  - 🔇 `Vol {n}` with mute icon when muted
+- **New Settings field** in `index.html`: `#rcAgentUrl` text input for the
+  agent URL, with i18n label and helper hint pointing at the README.
+  Value persisted in `localStorage['fbx_agent_url']`, defaults to
+  `http://localhost:8766`.
+- **11 new i18n keys** per language (EN / FR / AR): `statusStandby`,
+  `statusPowered`, `statusVol`, `statusAgentError`, `agentUrlLabel`,
+  `agentUrlHint`, `agentUrlPlaceholder`.
+
+### Design notes
+
+- **Backward compatible**: an empty agent URL or unreachable agent degrades
+  silently to the v1.0.3 behaviour. No breakage for existing users.
+- **Fully optional**: the agent lives in its own subdirectory and has its own
+  README. FreeZap's single-file static deployment still works without it.
+- **Single Python process**: no threads beyond the polling worker + HTTP
+  server's threading mixin. No external dependencies, no virtualenv, no pip.
+- **Mixed-content bonus**: in a future v1.2 we can route remote key presses
+  through the agent as well (`POST /key/<name>`), which would remove the
+  `chrome://settings/content/insecureContent` requirement for GitHub Pages
+  users on mobile. Not wired in v1.1.0 — keys still go to `hd1.freebox.fr`
+  via the legacy unauthenticated endpoint.
+
+### Security
+
+- The `app_token` is a long-lived credential. The agent saves it to
+  `~/.freezap/token.json` with file mode `0600`. Revocable from Freebox OS
+  under *Paramètres de la Freebox → Gestion des accès → Applications*.
+
 ## v1.0.3 — 2026-04-10
 
 Freebox reachability status in the header pill.

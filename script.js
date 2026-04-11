@@ -68,6 +68,11 @@ const LANG = {
     statusNoCode: 'No code', statusChecking: 'Checking…',
     statusReachable: 'Freebox reachable', statusUnreachable: 'Freebox unreachable',
     statusLastTx: '{s}s ago',
+    statusStandby: '😴 Standby', statusPowered: '🟢 On',
+    statusVol: 'Vol {n}', statusAgentError: '✗ Agent error',
+    agentUrlLabel: 'FreeZap Agent URL',
+    agentUrlHint: 'Optional — local agent for live player status (powered, channel, volume). See freezap-agent/README.md.',
+    agentUrlPlaceholder: 'http://localhost:8766',
     mainSection: 'Remote', mainDesc: 'Pilot your Freebox Player from the browser',
     sectionA: 'Where do I find my remote code?', sectionB: 'Keyboard shortcuts',
     rcCode: 'Remote code', rcSave: 'Save', rcSaved: '✅ Code saved', rcMissingCode: '⚠️ Enter your remote code first',
@@ -128,6 +133,11 @@ const LANG = {
     statusNoCode: 'Pas de code', statusChecking: 'Vérification…',
     statusReachable: 'Freebox joignable', statusUnreachable: 'Freebox injoignable',
     statusLastTx: 'il y a {s}s',
+    statusStandby: '😴 En veille', statusPowered: '🟢 Allumée',
+    statusVol: 'Vol {n}', statusAgentError: '✗ Agent KO',
+    agentUrlLabel: 'URL de l\'agent FreeZap',
+    agentUrlHint: 'Optionnel — agent local pour le statut temps réel (allumée, chaîne, volume). Voir freezap-agent/README.md.',
+    agentUrlPlaceholder: 'http://localhost:8766',
     mainSection: 'Télécommande', mainDesc: 'Pilote ta Freebox Player depuis le navigateur',
     sectionA: 'Où trouver mon code de télécommande ?', sectionB: 'Raccourcis clavier',
     rcCode: 'Code', rcSave: 'Enregistrer', rcSaved: '✅ Code enregistré', rcMissingCode: '⚠️ Saisis d\'abord ton code',
@@ -188,6 +198,11 @@ const LANG = {
     statusNoCode: 'لا يوجد رمز', statusChecking: 'جارٍ الفحص…',
     statusReachable: 'Freebox متاح', statusUnreachable: 'Freebox غير متاح',
     statusLastTx: 'قبل {s} ث',
+    statusStandby: '😴 في وضع السكون', statusPowered: '🟢 مُشغَّلة',
+    statusVol: 'الصوت {n}', statusAgentError: '✗ الوكيل معطّل',
+    agentUrlLabel: 'رابط وكيل FreeZap',
+    agentUrlHint: 'اختياري — وكيل محلي للحالة الحية (مُشغَّلة، القناة، الصوت). راجع freezap-agent/README.md.',
+    agentUrlPlaceholder: 'http://localhost:8766',
     mainSection: 'جهاز التحكم', mainDesc: 'تحكّم في Freebox Player من المتصفح',
     sectionA: 'أين أجد رمز جهاز التحكم؟', sectionB: 'اختصارات لوحة المفاتيح',
     rcCode: 'الرمز', rcSave: 'حفظ', rcSaved: '✅ تم حفظ الرمز', rcMissingCode: '⚠️ أدخل الرمز أولًا',
@@ -1518,9 +1533,13 @@ document.readyState === 'loading'
    ═══════════════════════════════════════════════════════════════════ */
 
 const FBX_LS_KEY = 'fbx_rc_code';
+const FBX_AGENT_LS_KEY = 'fbx_agent_url';
+const FBX_AGENT_DEFAULT = 'http://localhost:8766';
 const FBX_RC_URL = 'http://hd1.freebox.fr/pub/remote_control';
 const FBX_PROBE_URL = 'http://hd1.freebox.fr/';   // innocuous root — no command sent
-const FBX_HEARTBEAT_MS = 20000;                    // re-probe every 20 s
+const FBX_HEARTBEAT_MS = 20000;                    // reachability re-probe interval
+const FBX_AGENT_POLL_MS = 2000;                    // agent /status polling interval
+const FBX_AGENT_FRESH_MS = 6000;                   // agent data considered fresh within this window
 const FBX_LAST_TX_FRESH_MS = 8000;                 // "OK · Ns ago" label within this window
 
 // Runtime status state (not persisted)
@@ -1529,6 +1548,12 @@ let fbxLastTxOk = null;     // true | false | null
 let fbxReachable = null;    // true | false | null (probe result)
 let fbxHeartbeatId = null;  // interval id
 let fbxStatusRefreshId = null; // interval id (UI refresh for "Ns ago" counter)
+
+// Agent-derived state (v1.1.0 — optional, filled by fbxPollAgent)
+let fbxAgentData = null;    // { powered, power_state, channel, volume, muted, ... } | null
+let fbxAgentTime = 0;       // timestamp of last successful /status response
+let fbxAgentOk = null;      // true | false | null
+let fbxAgentPollId = null;  // interval id
 
 function fbxGetCode() {
   return (localStorage.getItem(FBX_LS_KEY) || '').trim();
@@ -1552,14 +1577,18 @@ function fbxSaveCode() {
 }
 
 /**
- * Update the status pill text + color based on current runtime state.
- * States (in order of precedence):
- *   1. No code            → gray "No code"
- *   2. Fresh last TX OK   → green "OK · Ns ago"
- *   3. Fresh last TX err  → red   "Error · Ns ago"
- *   4. Reachable (probe)  → green "Freebox reachable"
- *   5. Unreachable        → red   "Freebox unreachable"
- *   6. Checking (initial) → gray "Checking…"
+ * Update the status pill text + color.
+ * Precedence:
+ *   1. No code                            → gray  "No code"
+ *   2. Agent fresh + running + channel    → green "📺 {channel}"  (+ volume if present)
+ *   3. Agent fresh + running              → green "Allumée"
+ *   4. Agent fresh + standby              → yellow "😴 En veille"
+ *   5. Agent fresh + error                → red   "Agent KO"
+ *   6. Fresh last TX OK (no agent)        → green "✓ Ns ago"
+ *   7. Fresh last TX err (no agent)       → red   "✗ Ns ago"
+ *   8. Reachable via probe (no agent)     → green "Joignable"
+ *   9. Unreachable                        → red   "Injoignable"
+ *  10. Checking (initial)                 → gray  "Vérification…"
  */
 function fbxRefreshStatus() {
   const pill = document.getElementById('statusPill');
@@ -1575,8 +1604,36 @@ function fbxRefreshStatus() {
   }
 
   const now = Date.now();
-  const fresh = fbxLastTxTime && (now - fbxLastTxTime) < FBX_LAST_TX_FRESH_MS;
 
+  // ─── 2-5: Agent data takes precedence when fresh ───
+  const agentFresh = fbxAgentTime && (now - fbxAgentTime) < FBX_AGENT_FRESH_MS;
+  if (agentFresh && fbxAgentData) {
+    const d = fbxAgentData;
+    if (d.agent_ok === false) {
+      txt.textContent = (s.statusAgentError || '✗ Agent KO');
+      pill.classList.remove('connected');
+      return;
+    }
+    if (d.power_state === 'standby' || d.powered === false) {
+      txt.textContent = s.statusStandby || '😴 Standby';
+      pill.classList.remove('connected');
+      return;
+    }
+    // Powered — try to show channel + volume
+    const parts = [];
+    if (d.channel) parts.push('📺 ' + d.channel);
+    else parts.push(s.statusPowered || '🟢 Allumée');
+    if (typeof d.volume === 'number') {
+      const vl = (s.statusVol || 'Vol {n}').replace('{n}', String(d.volume));
+      parts.push((d.muted ? '🔇 ' : '🔊 ') + vl);
+    }
+    txt.textContent = parts.join(' · ');
+    pill.classList.add('connected');
+    return;
+  }
+
+  // ─── 6-7: Fresh last TX ───
+  const fresh = fbxLastTxTime && (now - fbxLastTxTime) < FBX_LAST_TX_FRESH_MS;
   if (fresh) {
     const age = Math.max(1, Math.round((now - fbxLastTxTime) / 1000));
     const ago = (s.statusLastTx || 'Last TX').replace('{s}', String(age));
@@ -1590,6 +1647,7 @@ function fbxRefreshStatus() {
     return;
   }
 
+  // ─── 8-10: Fallback to reachability probe ───
   if (fbxReachable === true) {
     txt.textContent = s.statusReachable || 'Freebox reachable';
     pill.classList.add('connected');
@@ -1637,6 +1695,73 @@ function fbxStartStatusRefresh() {
   if (fbxStatusRefreshId) return;
   // Tick every second so the "Ns ago" label stays current
   fbxStatusRefreshId = setInterval(fbxRefreshStatus, 1000);
+}
+
+/* ═══════ v1.1.0: FreeZap Agent polling (optional richer status) ═══════ */
+
+function fbxGetAgentUrl() {
+  try {
+    const stored = localStorage.getItem(FBX_AGENT_LS_KEY);
+    if (stored != null) return stored.trim();
+  } catch {}
+  return FBX_AGENT_DEFAULT;
+}
+
+function fbxSetAgentUrl(url) {
+  try { localStorage.setItem(FBX_AGENT_LS_KEY, url); } catch {}
+  // Restart polling with new URL
+  fbxStopAgentPolling();
+  fbxAgentData = null;
+  fbxAgentOk = null;
+  fbxAgentTime = 0;
+  if (url && url.trim()) fbxStartAgentPolling();
+  fbxRefreshStatus();
+}
+
+/**
+ * Polls the local FreeZap Agent at /status. The agent is CORS-enabled so we
+ * can read the JSON response directly. Agent is optional — if it's not running
+ * or the URL is empty, we silently fall back to the v1.0.3 reachability mode.
+ */
+async function fbxPollAgent() {
+  const base = fbxGetAgentUrl();
+  if (!base) return;
+  const url = base.replace(/\/$/, '') + '/status';
+  try {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), 3000) : null;
+    const resp = await fetch(url, {
+      mode: 'cors',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined,
+    });
+    if (timeoutId) clearTimeout(timeoutId);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    fbxAgentData = data;
+    fbxAgentTime = Date.now();
+    fbxAgentOk = data && data.agent_ok !== false;
+  } catch (_e) {
+    // Agent down / not reachable / CORS fail — fail silently; falls back to reachability mode
+    fbxAgentOk = false;
+    // Mark timestamp so refresh logic treats it as stale quickly, not indefinitely
+    // (we keep fbxAgentTime unchanged so the data stays "stale" and doesn't override reachability)
+  }
+  fbxRefreshStatus();
+}
+
+function fbxStartAgentPolling() {
+  if (fbxAgentPollId) return;
+  if (!fbxGetAgentUrl()) return;
+  // First poll immediately, then every FBX_AGENT_POLL_MS
+  fbxPollAgent();
+  fbxAgentPollId = setInterval(fbxPollAgent, FBX_AGENT_POLL_MS);
+}
+
+function fbxStopAgentPolling() {
+  if (!fbxAgentPollId) return;
+  clearInterval(fbxAgentPollId);
+  fbxAgentPollId = null;
 }
 
 async function fbxSendKey(key, long = false) {
@@ -1746,12 +1871,21 @@ function initFreeboxRemote() {
   fbxBindKeypad();
   fbxBindKeyboard();
 
-  // Initial status render ("No code" or "Checking…") then kick the probe
+  // Wire the agent URL input (v1.1.0)
+  const agentInput = document.getElementById('rcAgentUrl');
+  if (agentInput) {
+    agentInput.value = fbxGetAgentUrl();
+    agentInput.addEventListener('change', (e) => fbxSetAgentUrl(e.target.value.trim()));
+    agentInput.addEventListener('blur', (e) => fbxSetAgentUrl(e.target.value.trim()));
+  }
+
+  // Initial status render ("No code" or "Checking…") then kick the probes
   fbxRefreshStatus();
   fbxStartStatusRefresh();
   if (saved) {
     fbxProbeReachability().then(fbxRefreshStatus);
     fbxStartHeartbeat();
+    fbxStartAgentPolling();  // silently noop if agent URL empty or unreachable
   }
 
   log('📺 Freebox remote ready', 'info');

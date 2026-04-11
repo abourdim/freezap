@@ -13,3 +13,10 @@
 # Build artifacts
 *.zip
 dist/
+
+# Preview / dev tooling (not part of the shipped app)
+.claude/
+
+# Local Freebox agent token (credential — never commit!)
+freezap-agent/token.json
+~/.freezap/
