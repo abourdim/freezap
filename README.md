@@ -21,7 +21,16 @@ PWA install.
 
 ---
 
-## 📡 Live player status (optional, v1.1.0+)
+## 📡 Live player status (optional, v1.1.0+ — ⚠️ experimental)
+
+> **⚠️ Status as of v1.1.0**: the agent's pairing flow is **experimental and not
+> yet verified end-to-end** on a live Freebox Revolution. The HTTP layer has
+> been unit-tested but 4 real-world pairing attempts timed out on the box side.
+> See [`freezap-agent/README.md`](./freezap-agent/README.md#️-known-limitation)
+> for the full investigation and workarounds (including reusing an existing
+> `app_token` from Home Assistant / Jeedom / freebox-api). If pairing fails,
+> FreeZap silently falls back to the v1.0.3 passive reachability pill — no
+> breakage.
 
 Out of the box FreeZap only knows *"the Freebox responds on the LAN"*. If you
 want the header pill to show **real-time player state** (powered / in standby,

@@ -3,6 +3,49 @@
 All notable changes to **FreeZap** are documented here. This project follows
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## v1.1.1 — 2026-04-11
+
+Docs-only patch marking the v1.1.0 agent pairing flow as **experimental /
+unverified** after 4 real-world pairing attempts against a Freebox Revolution
+(r1, `api_version: 15.0`) all timed out on the box side.
+
+### Investigation summary
+
+The HTTP protocol works:
+
+- `POST /api/v6/login/authorize/` returns a valid `track_id` + `app_token` ✅
+- `GET /api/v6/login/authorize/{track_id}` returns `status: "pending"` for ~50 s ✅
+- After ~50 s the box transitions to `status: "timeout"` without ever accepting
+  the physical validation (neither via the front-panel OLED nor via the
+  Freebox OS web UI `Gestion des accès → Applications` tab)
+
+The HMAC-SHA1 computation (`key=app_token`, `data=challenge`) and the session
+login flow were not reached because pairing never completed. They remain
+unit-tested in code but unverified against a live box.
+
+### Changed
+
+- **`freezap-agent/README.md`**: added a prominent `⚠️ Known limitation` section
+  at the top documenting the 4 pairing attempts, the likely causes (Revolution
+  OLED no longer rendering the prompt, firmware quirk, or authorization UI
+  moved), and workarounds including **reusing an existing `app_token`** from
+  Home Assistant / Jeedom / hacf-fr-freebox-api / Matschik-freebox by dropping
+  it into `~/.freezap/token.json` as `{"app_token": "…"}`.
+- **`README.md`**: the "Live player status" section now carries an explicit
+  `⚠️ experimental` warning linking to the known limitation section.
+- **No code change.** FreeZap continues to work exactly as in v1.1.0:
+  - If the agent is absent / unpaired / unreachable → silent fallback to the
+    v1.0.3 passive reachability pill
+  - If the agent somehow succeeds in pairing (on Pop / Delta / Ultra, or on a
+    Revolution with working UI) → rich pill with `📺 channel · 🔊 Vol N`
+
+### Known issue tracked
+
+If you own a working Freebox Revolution setup and can successfully pair the
+agent, please open an issue or PR on the [FreeZap repo](https://github.com/abourdim/freezap)
+describing how you triggered the validation prompt. That would help unblock
+the feature for other Revolution owners.
+
 ## v1.1.0 — 2026-04-11
 
 Real-time Freebox Player status via an optional local agent.

@@ -5,8 +5,53 @@
 > volume) and exposes it on `http://localhost:8766/` with CORS so FreeZap can
 > poll it.
 
+## ⚠️ Known limitation — pairing untested on Freebox Revolution (v6)
+
+**Status as of 2026-04-11:** the agent's pairing flow has been unit-tested
+(HTTP layer OK, HMAC-SHA1 correct, polling logic correct) but **has NOT been
+verified end-to-end against a real Freebox Revolution**. Four pairing attempts
+were made on a Revolution (r1) running `api_version: 15.0` and all four timed
+out on the box side.
+
+**What we observed:**
+
+- `POST /api/v6/login/authorize/` returns a valid `track_id` + `app_token` ✅
+- `GET /api/v6/login/authorize/{track_id}` returns `status: "pending"` for ~50 s ✅
+- After ~50 s the box transitions to `status: "timeout"` without ever accepting
+  the physical validation on the front-panel OLED or the Freebox OS web UI
+
+**Likely causes:**
+
+- The Freebox Revolution's front-panel OLED no longer displays the authorization
+  prompt on recent firmwares (or the OLED hardware has degraded)
+- The validation UI may have moved to a location we haven't identified yet
+
+**Workarounds if you hit the same issue:**
+
+- **Use an existing `app_token`** from another Freebox tool you already have paired:
+  - [Home Assistant](https://www.home-assistant.io/integrations/freebox/) — token in `~/.homeassistant/.freebox-*`
+  - [Jeedom Freebox plugin](https://doc.jeedom.com/en_US/plugins/automation%20protocol/freebox/) — token in the plugin config
+  - [hacf-fr/freebox-api](https://github.com/hacf-fr/freebox-api) — token in `~/.freebox-api/`
+  - [Matschik/freebox](https://github.com/Matschik/freebox) — token in its config file
+
+  Copy the `app_token` into `~/.freezap/token.json` as `{"app_token": "…"}` and
+  the agent will skip pairing and go straight to session login.
+
+- **Try a Freebox Pop / Delta / Ultra** — these have a working pairing UI on
+  their touchscreen and should pair cleanly with the existing code.
+
+- **Help welcome** — if you figure out how to trigger the validation prompt on a
+  Revolution, please open a PR or issue on the [FreeZap repo](https://github.com/abourdim/freezap).
+
+**If pairing fails, FreeZap still works perfectly** — it silently falls back to
+the v1.0.3 passive reachability pill (`Joignable` / `Injoignable` / `Last TX: Ns ago`).
+No feature is lost, the enrichment (channel / volume / power state) simply
+remains unavailable until the pairing succeeds.
+
+---
+
 Without this agent, FreeZap only knows *"the Freebox responds on the LAN"*.
-With the agent, FreeZap shows:
+With the agent (once paired), FreeZap shows:
 
 - 🟢 **`📺 TF1`** — Player running, on channel TF1
 - 😴 **`En veille`** — Player in standby
